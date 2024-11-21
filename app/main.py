@@ -15,8 +15,6 @@ DBUSER = "admin"
 DBPASS = os.getenv('DBPASS')
 DB = "eju2pk"
 
-db = mysql.connector.connect(user=DBUSER, host=DBHOST, password=DBPASS, database=DB)
-cur=db.cursor()
 
 app = FastAPI()
 
@@ -27,7 +25,7 @@ app.add_middleware(
     allow_methods= ['*'],
     allow_headers= ['*'],
 )
-@app.get("/")
+@app.get("/")  # zone apex
 def zone_apex():
     return {"Greetings": "Breadloaf"}
 
@@ -61,21 +59,29 @@ async def get_story():
 @app.get('/genres')
 def get_genres():
     query = "SELECT * FROM genres ORDER BY genreid;"
-    try:
+    db = mysql.connector.connect(user=DBUSER, host=DBHOST, password=DBPASS, database=DB)
+    cur=db.cursor()
+    try:    
         cur.execute(query)
         headers=[x[0] for x in cur.description]
         results = cur.fetchall()
         json_data=[]
         for result in results:
             json_data.append(dict(zip(headers,result)))
-            return(json_data)
+        cur.close()
+        db.close()
+        return(json_data)
     except Error as e:
         print("MySQL Error: ", str(e))
+        cur.close()
+        db.close()
         return {"Error": "MySQL Error: " + str(e)}
 
 @app.get('/songs')
 def get_songs():
     query = "Select * From songs ORDER BY id;"
+    db = mysql.connector.connect(user=DBUSER, host=DBHOST, password=DBPASS, database=DB)
+    cur=db.cursor()
     try:
         cur.execute(query)
         headers=[x[0] for x in cur.description]
@@ -83,7 +89,11 @@ def get_songs():
         json_data=[]
         for result in results:
             json_data.append(dict(zip(headers,result)))
+        cur.close()
+        db.close()
         return(json_data)
     except Error as e:
         print("MySQL Error: ", str(e))
+        cur.close()
+        db.close()
         return {"Error": "MySQL Error: " + str(e)}
